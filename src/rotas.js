@@ -23,4 +23,5 @@ rotas.post('/contas/transacoes/transferir',contas.fazerTransferencia)
 
 rotas.get('/contas/saldo',intermediarios.validaConta,intermediarios.validaSenhaConta, contas.consultarSaldo)
 
+rotas.get('/contas/extrato',intermediarios.validaConta,intermediarios.validaSenhaConta, contas.consultarExtrato )
 module.exports= rotas;

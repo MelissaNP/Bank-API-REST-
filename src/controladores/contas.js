@@ -1,4 +1,4 @@
-let {banco, contas}= require('../bancodedados')
+let {banco, contas, depositos,saques, transferencias}= require('../bancodedados')
 let {numeroConta} =require('../bancodedados')
 
 let encontrarConta = (contas, numeroConta) => {
@@ -47,7 +47,6 @@ const criarConta = (req, res) => {
 
 const fazerDeposito = (req, res) => {
     const {numero_conta , valor } = req.body;
-
     contaEncontrada = encontrarConta(contas, Number(numero_conta));
 
     if (!numeroConta|| !valor) {
@@ -62,24 +61,30 @@ const fazerDeposito = (req, res) => {
 
     contaEncontrada.saldo += Number(valor);
 
+    const depositoAtual = {
+        data: new Date(),
+        numero_conta: Number(numero_conta),
+        valor: Number(valor)
+    };
+
+    depositos.push(depositoAtual);
+  //  console.log(depositoAtual);
     return res.status(204).send();
 }
 
 const deletarConta = (req, res) => {
     const { numeroConta } = req.params;
-    const encontrarConta = contas.find((conta) => {
-        return conta.numero === Number(numeroConta);
-    });
+    const contaEncontrada = encontrarConta(contas,Number(numeroConta))
 
-    if (!deletaressaconta) {
+    if (!contaEncontrada) {
         return res.status(404).json({ mensagem: 'Esta conta não existe, verifique o número' });
     }
-    if(deletaressaconta.saldo != 0){
+    if(contaEncontrada.saldo != 0){
         return res.status(403).json({ mensagem: 'É necessário ter saldo 0 antes de excluir a conta' });
     }
     
     contas = contas.filter((conta) => {
-        return conta.numero !== Number(numeroConta);
+        return conta.numero!== Number(numeroConta);
     });
 
     return res.status(204).send();
@@ -88,9 +93,9 @@ const deletarConta = (req, res) => {
 const fazerSaque= (req,res)=>{
     const {numero_conta, valor, senha} = req.body;
 
-    const contaEncontrada = encontrarConta(contas, Number(numeroConta));
+    const contaEncontrada = encontrarConta(contas, Number(numero_conta));
     
-    if (!contaEncontrada) {
+    if (!numero_conta) {
     return res.status(404).json({ mensagem: 'O número da conta é obrigatório' });
     }
 
@@ -102,7 +107,17 @@ const fazerSaque= (req,res)=>{
     return res.status(404).json({ mensagem: 'Saldo insuficiente para fazer o saque!' });
     } 
     contaEncontrada.saldo = contaEncontrada.saldo - Number(valor);
+   
+    const saqueatual = {
+        data: new Date(),
+        numero_conta: Number(numero_conta),
+        valor: Number(valor)
+    };
+
+    saques.push(saqueatual);
+   // console.log(depositoatual);
     return res.status(204).send();
+
 
 }
 
@@ -133,16 +148,53 @@ const fazerTransferencia= (req,res)=>{
      
     contaOrigem.saldo = contaOrigem.saldo - Number(valor); 
     contaDestino.saldo= contaDestino.saldo + Number(valor);
-    return res.status(204).send();
+    
+    const transferenciaenviadas = {
+        data: new Date(),
+        numero_conta_origem: Number(numero_conta_origem),
+        numero_conta_destino: Number(numero_conta_destino),
+        valor: Number(valor)
+    };
+     const transferenciarecebida = {
+        data: new Date(),
+        numero_conta_destino: Number(numero_conta_origem),
+        numero_conta_origem: Number(numero_conta_destino),
+        valor: Number(valor)
+    } 
+
+    transferencias.push(transferenciaenviadas);
+    transferencias.push(transferenciarecebida);
+
+   // console.log(depositoatual);
+   // return res.json(transferencias);
+      return res.status(204).send();
+    
 }
 
 const consultarSaldo = (req, res) => {
     const {numero_conta,senha} = req.query; 
-
     const saldo = encontrarConta(contas,Number(numero_conta)).saldo;
-    console.log(saldo);
+   // console.log(saldo);
     return res.json(saldo);
 };
+
+const consultarExtrato = (req, res) => {
+    const { numero_conta, senha } = req.query;
+
+    const extrato_depositos = depositos.filter((conta) => conta.numero_conta === Number(numero_conta));
+    const extrato_saques = saques.filter((conta) => conta.numero_conta === Number(numero_conta));
+    const extrato_transferenciasenviadas = transferencias.filter((conta) => conta.numero_conta_origem === Number(numero_conta));
+    const extrato_transferenciasrecebidas = transferencias.filter((conta) => conta.numero_conta_destino === Number(numero_conta));
+   
+    const extrato = {
+        depositos: extrato_depositos,
+        saques: extrato_saques,
+        transferenciasEnviadas: extrato_transferenciasenviadas,
+        transferenciasRecebidas: extrato_transferenciasrecebidas // Corrected variable name here
+    };
+
+    return res.json(extrato);
+}
 
 
 module.exports={encontrarConta,listarContas,
@@ -151,5 +203,6 @@ fazerDeposito,
 deletarConta,
 fazerSaque,
 fazerTransferencia,
-consultarSaldo
+consultarSaldo,
+consultarExtrato
 }
