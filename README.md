@@ -1,6 +1,6 @@
 <div align = "center">
   
-![logocubos]<img src = "imagens/logocubos.png">
+<img src = "imagens/logocubos.png">
 </div>
 
 <h1 align="center">  Bank-API-REST </h1>
